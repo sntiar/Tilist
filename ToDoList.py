@@ -4,12 +4,15 @@ from tkinter import ttk
 
 class ToDoList:
     def __init__(self,root):
-        self.root= root
+        self.root = root
         self.root.title('To Do List')
         self.root.geometry('600x600')
 
-        self.task_counter= 0
-        self.global_font=('rubik', 11, 'bold')
+        self.task_counter = 0
+        self.task_dict = {}
+        self.task_check_var = None
+
+        self.global_font = ('rubik', 11, 'bold')
 
         self.top_ui_setup()
         self.body_ui_setup()
@@ -64,21 +67,63 @@ class ToDoList:
         task_lbl.grid(column=0, row=0, padx=5, pady=5, sticky='ew') #ew = east to west (expand with the window resizing)
 
     def task_creation(self):
-        '''NEED TO FIND A WAY TO MAKE EVERY ENTRY AND EVERY CHECK BUTTON TO BE A DIFFERENT AND INDEPENDENT ONE 
-        EVERY TIME IS CREATED, SEARCHING THE INTERNET IT SAYS SOMETHING ABOUT "USING LIST OR DICTIONARIES TO
-        DINAMICLY CREATE THE WIDGETS"
-        '''
-        self.task_counter += 1
-
+        self.task_check_var = tk.IntVar() #check button variable
+       
         self.task_frame.grid_columnconfigure(1, weight=1)
 
-        self.task_cbtn = tk.Checkbutton(self.task_frame, text=f'Task {self.task_counter} : ', font=self.global_font)
+        self.task_cbtn = tk.Checkbutton(
+            self.task_frame, 
+            text=f'Task {self.task_counter} : ', 
+            font=self.global_font,
+            variable=self.task_check_var
+            )
         self.task_cbtn.grid(row=self.task_counter, column=0, pady=10, padx=10, sticky='ew')
 
-        self.task_entry = tk.Entry(self.task_frame, text='test', font=self.global_font)
+        self.task_entry = tk.Entry(self.task_frame, font=self.global_font)
         self.task_entry.grid(row=self.task_counter, column=1, padx=10, pady=10, sticky='ew')
 
+        #dictionary to store dinamicaly created widgets
+        self.task_dict[self.task_counter] = {'variable': self.task_check_var, 'entry': self.task_entry}
+
+        self.task_save_btn = tk.Button(
+            self.task_frame, 
+            text='SAVE', 
+            font=('rubik',8,'normal'), 
+            command=lambda:self.save_pressed(self.task_counter-1) 
+            )
+        self.task_save_btn.grid(row=self.task_counter, column=2, padx=5, pady=5)
+        self.task_cancel_btn = tk.Button(self.task_frame, text='CANCEL', font=('rubik',8,'normal') )
+        self.task_cancel_btn.grid(row=self.task_counter, column=3, padx=5, pady=5)
+
+        self.task_counter += 1
+            
+
+    def entry_lenght_limit(self,text):
+        return True if len(text)<=100 else False
         
+    
+    def empty_task(self,task:str):
+        return True if task == None else False
+
+    def check_task_input(self):
+        if self.entry_lenght_limit(self.task_entry.get()) is False: #if its under the limit ...
+            self.task_entry.delete(101,tk.END)
+        if self.empty_task(self.task_entry.get()) is True:
+            self.task_btn.configure(state='disabled')
+    
+    def entry_to_label(self, id):
+        text = self.task_dict[int(id)]['entry'].get()
+        self.task_dict[int(id)]['entry'].destroy()
+        converted_task_lbl = tk.Label(self.task_frame,text=text,font=self.global_font)
+        converted_task_lbl.grid(column=1, row=id)
+
+    def save_pressed(self,counter):
+        self.entry_to_label(counter)
+        self.task_save_btn.destroy()
+        self.task_cancel_btn.destroy()
+    
+    def cancel_pressed(self):
+        pass
         
         
 if __name__ == "__main__": 
