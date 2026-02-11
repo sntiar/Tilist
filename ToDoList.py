@@ -69,31 +69,40 @@ class ToDoList:
     def task_creation(self):
         self.task_check_var = tk.IntVar() #check button variable
        
-        self.task_frame.grid_columnconfigure(1, weight=1)
+        self.task_frame.grid_columnconfigure(0, weight=1)
+
+        self.task_individual_frame = tk.Frame(self.task_frame, background='skyblue')
+        self.task_individual_frame.grid(column=0, row=self.task_counter, sticky='ew')
+        self.task_individual_frame.grid_columnconfigure(1, weight=1)
+
 
         self.task_cbtn = tk.Checkbutton(
-            self.task_frame, 
+            self.task_individual_frame, 
             text=f'Task {self.task_counter} : ', 
             font=self.global_font,
             variable=self.task_check_var
             )
-        self.task_cbtn.grid(row=self.task_counter, column=0, pady=10, padx=10, sticky='ew')
+        self.task_cbtn.grid(row=0, column=0, pady=10, padx=10, sticky='ew')
 
-        self.task_entry = tk.Entry(self.task_frame, font=self.global_font)
-        self.task_entry.grid(row=self.task_counter, column=1, padx=10, pady=10, sticky='ew')
+        self.task_entry = tk.Entry(self.task_individual_frame, font=self.global_font)
+        self.task_entry.grid(row=0, column=1, padx=10, pady=10, sticky='ew')
 
         #dictionary to store dinamicaly created widgets
-        self.task_dict[self.task_counter] = {'variable': self.task_check_var, 'entry': self.task_entry}
+        self.task_dict[self.task_counter] = {
+            'variable': self.task_check_var, 
+            'entry': self.task_entry, 
+            'frame':self.task_individual_frame
+            }
 
         self.task_save_btn = tk.Button(
-            self.task_frame, 
+            self.task_individual_frame, 
             text='SAVE', 
             font=('rubik',8,'normal'), 
             command=lambda:self.save_pressed(self.task_counter-1) 
             )
-        self.task_save_btn.grid(row=self.task_counter, column=2, padx=5, pady=5)
-        self.task_cancel_btn = tk.Button(self.task_frame, text='CANCEL', font=('rubik',8,'normal') )
-        self.task_cancel_btn.grid(row=self.task_counter, column=3, padx=5, pady=5)
+        self.task_save_btn.grid(row=0, column=2, padx=5, pady=5)
+        self.task_cancel_btn = tk.Button(self.task_individual_frame, text='CANCEL', font=('rubik',8,'normal') )
+        self.task_cancel_btn.grid(row=0, column=3, padx=5, pady=5)
 
         self.task_counter += 1
             
@@ -112,9 +121,10 @@ class ToDoList:
             self.task_btn.configure(state='disabled')
     
     def entry_to_label(self, id):
+        task_frame = self.task_dict[int(id)]['frame']
         text = self.task_dict[int(id)]['entry'].get()
         self.task_dict[int(id)]['entry'].destroy()
-        converted_task_lbl = tk.Label(self.task_frame,text=text,font=self.global_font)
+        converted_task_lbl = tk.Label(task_frame,text=text,font=self.global_font)
         converted_task_lbl.grid(column=1, row=id)
 
     def save_pressed(self,counter):
