@@ -77,8 +77,8 @@ class ToDoList:
         self.task_individual_frame = tk.Frame(self.task_frame, background='skyblue')
         self.task_individual_frame.grid(column=0, row=self.task_counter, sticky='ew')
         self.task_individual_frame.grid_columnconfigure(1, weight=1)
-
-
+        
+        
         self.task_cbtn = tk.Checkbutton(
             self.task_individual_frame, 
             text=f'Task {self.task_counter} : ', 
@@ -86,8 +86,11 @@ class ToDoList:
             variable=self.task_check_var,
             bg='skyblue',
             relief='solid',
-            border=2
+            border=2,
+            command=lambda actual_id=self.task_counter:self.finished_task(actual_id) # original command=lambda:self.finished_task(self.task_counter-1) 
             )
+        self.task_frame_dict = {}
+        
         self.task_cbtn.grid(row=0, column=0, pady=10, padx=10, sticky='ew')
 
         self.task_entry = tk.Entry(self.task_individual_frame, font=self.global_font)
@@ -97,7 +100,8 @@ class ToDoList:
         self.task_dict[self.task_counter] = {
             'variable': self.task_check_var, 
             'entry': self.task_entry, 
-            'frame':self.task_individual_frame
+            'frame':self.task_individual_frame,
+            'check':self.task_cbtn
             }
 
         self.task_save_btn = tk.Button(
@@ -119,6 +123,8 @@ class ToDoList:
             font=('rubik',8,'normal'), 
             command=lambda:self.cancel_pressed(self.task_counter-1) ) 
         self.task_cancel_btn.grid(row=0, column=3, padx=5, pady=5)
+
+        self.modify_check_button_status(self.task_counter) #disable check button until the task is saved
 
         self.task_counter += 1
             
@@ -143,13 +149,21 @@ class ToDoList:
         else:
             self.task_btn.config(state='normal')
     
+    def modify_check_button_status(self,id):
+        ch_button = self.task_dict[id]['check']
+        if ch_button['state'] == tk.NORMAL:
+            ch_button.config(state='disabled')
+        else:
+            ch_button.config(state='normal')
+        
     def entry_to_label(self, id):
         task_frame = self.task_dict[int(id)]['frame']
         entry_info = self.task_dict[int(id)]['entry'].grid_info()
         text = self.task_dict[int(id)]['entry'].get()
         self.task_dict[int(id)]['entry'].destroy()
-        converted_task_lbl = tk.Label(task_frame,text=text,font=self.global_font, bg='skyblue')
-        converted_task_lbl.grid(column=entry_info['column'], row=entry_info['row'])
+        self.converted_task_lbl = tk.Label(task_frame,text=text,font=self.global_font, bg='skyblue')
+        self.converted_task_lbl.grid(column=entry_info['column'], row=entry_info['row'], sticky='W')
+        self.task_dict[id]['label'] = self.converted_task_lbl
 
     def save_pressed(self,counter):
         if self.check_task_empty(counter) is True:
@@ -160,12 +174,22 @@ class ToDoList:
             self.task_save_btn.destroy()
             self.task_cancel_btn.destroy()
             self.modify_task_button_status() # enable new task button again
+            self.modify_check_button_status(self.task_counter-1) #enable check button
     
     def cancel_pressed(self,id):
         self.task_dict[id]['frame'].destroy()
         self.modify_task_button_status()
         self.task_counter-=1 # reduces the counter as it is always augmented on new task btn press
-        
+
+    def finished_task(self,id):#function to cross out the task when checked 
+        check = self.task_dict[id]['variable']
+        text = self.task_dict[id]['label']
+        if check.get():
+            text.config(font=('rubik', 8, 'italic overstrike'))
+        else:
+            text.config(font=('rubik', 12, 'bold'))
+
+
         
 if __name__ == "__main__": 
     root = tk.Tk()
