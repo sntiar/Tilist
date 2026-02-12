@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
+from tkinter import messagebox
 
 
 class ToDoList:
@@ -67,6 +68,8 @@ class ToDoList:
         task_lbl.grid(column=0, row=0, padx=5, pady=5, sticky='ew') #ew = east to west (expand with the window resizing)
 
     def task_creation(self):
+        self.modify_task_button_status() #disable new task btn until save is pressed
+
         self.task_check_var = tk.IntVar() #check button variable
        
         self.task_frame.grid_columnconfigure(0, weight=1)
@@ -80,7 +83,10 @@ class ToDoList:
             self.task_individual_frame, 
             text=f'Task {self.task_counter} : ', 
             font=self.global_font,
-            variable=self.task_check_var
+            variable=self.task_check_var,
+            bg='skyblue',
+            relief='solid',
+            border=2
             )
         self.task_cbtn.grid(row=0, column=0, pady=10, padx=10, sticky='ew')
 
@@ -101,39 +107,64 @@ class ToDoList:
             command=lambda:self.save_pressed(self.task_counter-1) 
             )
         self.task_save_btn.grid(row=0, column=2, padx=5, pady=5)
-        self.task_cancel_btn = tk.Button(self.task_individual_frame, text='CANCEL', font=('rubik',8,'normal') )
+        '''
+        had to substract 1 from the counter used as id in save btn and cancel btn 
+        because the counter augments as the new task btn is pressed so if i didnt
+        the id would be wrong for these btn functions as they only executes after
+        the respective buttons are pressed
+        '''
+        self.task_cancel_btn = tk.Button(
+            self.task_individual_frame, 
+            text='CANCEL', 
+            font=('rubik',8,'normal'), 
+            command=lambda:self.cancel_pressed(self.task_counter-1) ) 
         self.task_cancel_btn.grid(row=0, column=3, padx=5, pady=5)
 
         self.task_counter += 1
             
-
     def entry_lenght_limit(self,text):
         return True if len(text)<=100 else False
-        
-    
-    def empty_task(self,task:str):
-        return True if task == None else False
+   
+    def forced_task_lenght(self,id):
+        task_text = self.task_dict[id]['entry']
+        if self.entry_lenght_limit(task_text.get()) is False: #if its under the limit ...
+            task_text.delete(100,tk.END)
 
-    def check_task_input(self):
-        if self.entry_lenght_limit(self.task_entry.get()) is False: #if its under the limit ...
-            self.task_entry.delete(101,tk.END)
-        if self.empty_task(self.task_entry.get()) is True:
-            self.task_btn.configure(state='disabled')
+    def check_task_empty(self,id):
+        task_text = self.task_dict[id]['entry']
+        if task_text.get() != '': 
+            return False
+        messagebox.showerror('ERROR', ' Task is empty! ')
+        return True      
+            
+    def modify_task_button_status(self):
+        if self.task_btn['state'] == tk.NORMAL:
+            self.task_btn.config(state='disabled')
+        else:
+            self.task_btn.config(state='normal')
     
     def entry_to_label(self, id):
         task_frame = self.task_dict[int(id)]['frame']
+        entry_info = self.task_dict[int(id)]['entry'].grid_info()
         text = self.task_dict[int(id)]['entry'].get()
         self.task_dict[int(id)]['entry'].destroy()
-        converted_task_lbl = tk.Label(task_frame,text=text,font=self.global_font)
-        converted_task_lbl.grid(column=1, row=id)
+        converted_task_lbl = tk.Label(task_frame,text=text,font=self.global_font, bg='skyblue')
+        converted_task_lbl.grid(column=entry_info['column'], row=entry_info['row'])
 
     def save_pressed(self,counter):
-        self.entry_to_label(counter)
-        self.task_save_btn.destroy()
-        self.task_cancel_btn.destroy()
+        if self.check_task_empty(counter) is True:
+            pass
+        else:
+            self.forced_task_lenght(counter)
+            self.entry_to_label(counter)
+            self.task_save_btn.destroy()
+            self.task_cancel_btn.destroy()
+            self.modify_task_button_status() # enable new task button again
     
-    def cancel_pressed(self):
-        pass
+    def cancel_pressed(self,id):
+        self.task_dict[id]['frame'].destroy()
+        self.modify_task_button_status()
+        self.task_counter-=1 # reduces the counter as it is always augmented on new task btn press
         
         
 if __name__ == "__main__": 
