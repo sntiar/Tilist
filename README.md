@@ -13,10 +13,12 @@ This application is designed to help users manage productivity through a goal-or
 *   **Data Persistence**: Implementation of a database to store and recover profiles, tasks, and sub-tasks across sessions.
 
 ### 🛠 Current Status: Developing Profile Contexts
-I am currently tackling **State Management**. 
-- [x] Successfully implemented dynamic profile creation and switching.
-- [wip] Debugging **Task-to-Profile Parentage** (ensuring tasks stay with their respective profiles).
-- [wip] Refactoring **Checkbutton logic** to handle unique task states across multiple frames.
+Recently fixed a major bug 
+- [x] Refactored the core data structure from a flat dictionary to a nested profile-based dictionary.
+- [ ] Implement Sub-Tasks.
+- [ ] Database integration.
+
+
 
 Side Note : As i started working on the 'profiles', i had to refactor some functions, so there may be variables or lines of code that arent being used or outdated comments that are pending for a clean up.
 
