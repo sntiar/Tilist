@@ -9,14 +9,10 @@ class ToDoList:
         self.root.title('To Do List')
         self.root.geometry('600x600')
 
-        self.task_counter = 0
-        self.task_dict = {}
-
         self.global_font = ('rubik', 11, 'bold')
 
         self.profiles_dict = {} #add a default
-        #self.profile_name = ''
-        
+    
         self.active_frame = None
 
         self.top_ui_setup()
@@ -64,9 +60,6 @@ class ToDoList:
         self.body_frame = tk.Frame(border_frame, background='lightblue', height=50, relief='solid', border=5)
         self.body_frame.pack(padx=5, pady=5, side='bottom', fill='both',expand=True) 
 
-        """self.task_frame= tk.Frame(self.body_frame, background='lightblue')
-        self.task_frame.pack(side='bottom', fill='both',expand=True)"""
-        
         tittle_frame = tk.Frame(self.body_frame, background='lightblue') #aux frame to keep the tittle label in place
         tittle_frame.pack(side='top', fill='x')
         tittle_frame.grid_columnconfigure(0, weight=1)   # allowing the label resizing by changing the father container
@@ -76,8 +69,13 @@ class ToDoList:
         task_lbl.grid(column=0, row=0, padx=5, pady=5, sticky='ew') #ew = east to west (expand with the window resizing)
 
     def task_creation(self):
-
+        
         profile = self.profile_cbx.get()
+
+        if 'task_dict' not in self.profiles_dict[profile]:
+            self.profiles_dict[profile]['task_dict'] = {}
+
+        task_dict = self.profiles_dict[profile]['task_dict']
 
         profile_counter = self.profiles_dict[profile][f'{profile}_counter']
 
@@ -87,80 +85,72 @@ class ToDoList:
 
         self.active_frame=p_frame
 
-        #self.check_profile()
-
         self.modify_task_button_status() #disable new task btn until save is pressed
 
         task_check_var = tk.IntVar() #check button variable
        
         p_frame.grid_columnconfigure(0, weight=1)
 
-        self.task_individual_frame = tk.Frame(p_frame, background='skyblue')
-        self.task_individual_frame.grid(column=0, row=profile_counter, sticky='ew')
-        self.task_individual_frame.grid_columnconfigure(1, weight=1)
+        task_individual_frame = tk.Frame(p_frame, background='skyblue')
+        task_individual_frame.grid(column=0, row=profile_counter, sticky='ew')
+        task_individual_frame.grid_columnconfigure(1, weight=1)
         
         
-        self.task_cbtn = tk.Checkbutton(
-            self.task_individual_frame, 
+        task_cbtn = tk.Checkbutton(
+            task_individual_frame, 
             text=f'Task {profile_counter} : ', 
             font=self.global_font,
             variable=task_check_var,
             bg='skyblue',
             relief='solid',
             border=2,
-            command=lambda actual_id=profile_counter:self.finished_task(actual_id) # original command=lambda:self.finished_task(self.task_counter-1) 
+            command=lambda p=profile, v=task_check_var,actual_id=profile_counter:self.finished_task(p,v,actual_id) # original command=lambda:self.finished_task(self.task_counter-1) 
             )
-        #self.task_frame_dict = {}
         
-        self.task_cbtn.grid(row=0, column=0, pady=10, padx=10, sticky='ew')
+        task_cbtn.grid(row=0, column=0, pady=10, padx=10, sticky='ew')
 
-        self.task_entry = tk.Entry(self.task_individual_frame, font=self.global_font)
-        self.task_entry.grid(row=0, column=1, padx=10, pady=10, sticky='ew')
+        task_entry = tk.Entry(task_individual_frame, font=self.global_font)
+        task_entry.grid(row=0, column=1, padx=10, pady=10, sticky='ew')
 
         #dictionary to store dinamicaly created widgets
-        self.task_dict[profile_counter] = {
+        task_dict[profile_counter]= {
             'variable': task_check_var, 
-            'entry': self.task_entry, 
-            'frame':self.task_individual_frame,
-            'check':self.task_cbtn
+            'entry': task_entry, 
+            'frame':task_individual_frame,
+            'check':task_cbtn
             }
         
-        self.profiles_dict[profile]['task_dict'] = self.task_dict #assign the whole dictionary to actual profile
+        self.profiles_dict[profile].update({'task_dict' : task_dict}) #assign the whole dictionary to actual profile
 
         self.task_save_btn = tk.Button(
-            self.task_individual_frame, 
+            task_individual_frame, 
             text='SAVE', 
             font=('rubik',8,'normal'), 
-            command=lambda:self.save_pressed(profile_counter) 
+            command=lambda:self.save_pressed(profile_counter,profile) 
             )
         self.task_save_btn.grid(row=0, column=2, padx=5, pady=5)
-        '''
-        had to substract 1 from the counter used as id in save btn and cancel btn 
-        because the counter augments as the new task btn is pressed so if i didnt
-        the id would be wrong for these btn functions as they only executes after
-        the respective buttons are pressed
-        '''
+        
         self.task_cancel_btn = tk.Button(
-            self.task_individual_frame, 
+            task_individual_frame, 
             text='CANCEL', 
             font=('rubik',8,'normal'), 
-            command=lambda:self.cancel_pressed(profile_counter) ) 
+            command=lambda:self.cancel_pressed(profile_counter,profile) ) 
         self.task_cancel_btn.grid(row=0, column=3, padx=5, pady=5)
 
-        self.modify_check_button_status(profile_counter) #disable check button until the task is saved
+        self.modify_check_button_status(profile_counter, profile) #disable check button until the task is saved
 
-        #self.task_counter += 1
             
     def entry_lenght_limit(self,text):
         return True if len(text)<=100 else False
    
-    def forced_task_lenght(self,id):
-        task_text = self.task_dict[id]['entry']
+    def forced_task_lenght(self,id,profile):
+        
+        task_text = self.profiles_dict[profile]['task_dict'][id]['entry']
         if self.entry_lenght_limit(task_text.get()) is False: #if its under the limit ...
             task_text.delete(100,tk.END)
 
-    def check_task_empty(self,id):
-        task_text = self.task_dict[id]['entry']
+    def check_task_empty(self,id,profile):
+        task_text = self.profiles_dict[profile]['task_dict'][id]['entry']
         if task_text.get() != '': 
             return False
         messagebox.showerror('ERROR', ' Task is empty! ')
@@ -172,41 +162,43 @@ class ToDoList:
         else:
             self.task_btn.config(state='normal')
     
-    def modify_check_button_status(self,id):
-        ch_button = self.task_dict[id]['check']
+    def modify_check_button_status(self,id,profile):
+        ch_button = self.profiles_dict[profile]['task_dict'][id]['check']
         if ch_button['state'] == tk.NORMAL:
             ch_button.config(state='disabled')
         else:
             ch_button.config(state='normal')
         
-    def entry_to_label(self, id):
-        task_frame = self.task_dict[int(id)]['frame']
-        entry_info = self.task_dict[int(id)]['entry'].grid_info()
-        text = self.task_dict[int(id)]['entry'].get()
-        self.task_dict[int(id)]['entry'].destroy()
+    def entry_to_label(self, id, profile):
+        task_frame = self.profiles_dict[profile]['task_dict'][int(id)]['frame']
+        entry_info = self.profiles_dict[profile]['task_dict'][int(id)]['entry'].grid_info()
+        text = self.profiles_dict[profile]['task_dict'][int(id)]['entry'].get()
+        self.profiles_dict[profile]['task_dict'][int(id)]['entry'].destroy()
         self.converted_task_lbl = tk.Label(task_frame,text=text,font=self.global_font, bg='skyblue')
         self.converted_task_lbl.grid(column=entry_info['column'], row=entry_info['row'], sticky='W')
-        self.task_dict[id]['label'] = self.converted_task_lbl
+        self.profiles_dict[profile]['task_dict'][id]['label'] = self.converted_task_lbl
 
-    def save_pressed(self,counter):
-        if self.check_task_empty(counter) is True:
+    def save_pressed(self,counter,profile):
+        if self.check_task_empty(counter,profile) is True:
             pass
         else:
-            self.forced_task_lenght(counter)
-            self.entry_to_label(counter)
+            self.forced_task_lenght(counter,profile)
+            self.entry_to_label(counter,profile)
             self.task_save_btn.destroy()
             self.task_cancel_btn.destroy()
             self.modify_task_button_status() # enable new task button again
-            self.modify_check_button_status(counter) #enable check button #check if something broke after changing id
+            self.modify_check_button_status(counter,profile) #enable check button 
     
-    def cancel_pressed(self,id):
-        self.task_dict[id]['frame'].destroy()
+    def cancel_pressed(self,id, profile):
+        self.profiles_dict[profile]['task_dict'][id]['frame'].destroy()
         self.modify_task_button_status()
-        #self.task_counter-=1 # reduces the counter as it is always augmented on new task btn press
+       
 
-    def finished_task(self,id):#function to cross out the task when checked 
-        check = self.task_dict[id]['variable']
-        text = self.task_dict[id]['label']
+    def finished_task(self,profile,var,id):#function to cross out the task when checked 
+        active_profile = profile
+        check = var
+        text = self.profiles_dict[active_profile]['task_dict'][id]['label']
+        
         if check.get():
             text.config(font=('rubik', 8, 'italic overstrike'))
         else:
@@ -222,9 +214,9 @@ class ToDoList:
         create_profile_btn.pack(side='left', padx=10, pady=10)
         cancel_profile_btn = tk.Button(self.profile_root, text='Cancel', command=self.profile_root.destroy)
         cancel_profile_btn.pack(side='right', padx=10, pady=10)
-        #test
+        """#test btn
         test_btn = tk.Button(self.profile_root, text='test', command=lambda:messagebox.showinfo('dictionary', f'profile dictionary :[ {self.profiles_dict.items()} ]'))
-        test_btn.pack(side='bottom', padx=10, pady=10)
+        test_btn.pack(side='bottom', padx=10, pady=10)"""
 
     def profile_creation_btn(self):
         profile_name = self.profile_entry.get()
@@ -245,26 +237,25 @@ class ToDoList:
             self.profiles_dict[key].update({'frame':tk.Frame(self.body_frame, bg='lightblue')})
             self.profiles_dict[key]['frame'].pack(side='bottom', fill='both',expand=True)
         else: 
-            #self.active_frame.pack_forget()
             self.profiles_dict[key]['frame'].pack(side='bottom', fill='both',expand=True)
         
     def profile_cb(self, *_):
         profile = self.profile_cbx.get()
         self.profile_frame(profile)
         print(self.profile_cbx.get())
-        #self.check_profile()
         self.task_btn.config(state='normal')
-        """self.profiles_dict[profile]['frame'].config(bg='yellow', width=100, height=100)#weird bg to test existence
-        self.profiles_dict[profile]['frame'].pack(side='bottom', padx=10, pady=10)"""
         self.active_frame = self.profiles_dict[profile]['frame']
 
     def check_profile(self):
         if self.profile_cbx.get() != 'default':
             self.task_btn.config(state='normal')
         self.task_btn.config(state='disabled')   
+
+    
         
         
 if __name__ == "__main__": 
     root = tk.Tk()
     test = ToDoList(root)
+    
     root.mainloop()
