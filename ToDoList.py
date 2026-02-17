@@ -7,17 +7,16 @@ class ToDoList:
     def __init__(self,root):
         self.root = root
         self.root.title('To Do List')
-        self.root.geometry('600x600')
+        self.root.geometry('700x400')
 
         self.global_font = ('rubik', 11, 'bold')
 
-        self.profiles_dict = {} #add a default
+        self.profiles_dict = {'default':{'default_counter':0}} 
     
         self.active_frame = None
 
         self.top_ui_setup()
         self.body_ui_setup()
-
 
     def top_ui_setup(self):
         top_font = self.global_font
@@ -30,7 +29,6 @@ class ToDoList:
 
         self.task_btn= tk.Button(self.top_form, text='NEW TASK', font=top_font, command= self.task_creation)
         self.task_btn.grid(column=2, row=2, padx=10, pady=20)
-        self.task_btn.config(state='disabled')
 
         self.sub_task_btn= tk.Button(self.top_form, text='NEW SUBTASK', font=top_font)
         self.sub_task_btn.grid(column=3, row=2, padx=10, pady=20)
@@ -72,6 +70,10 @@ class ToDoList:
         
         profile = self.profile_cbx.get()
 
+        if profile == 'default' and 'frame' not in self.profiles_dict['default']:
+            self.profiles_dict['default'].update({'frame':tk.Frame(self.body_frame, bg='lightblue')})
+            self.profiles_dict['default']['frame'].pack(side='bottom', fill='both', expand=True)
+
         if 'task_dict' not in self.profiles_dict[profile]:
             self.profiles_dict[profile]['task_dict'] = {}
 
@@ -86,6 +88,7 @@ class ToDoList:
         self.active_frame=p_frame
 
         self.modify_task_button_status() #disable new task btn until save is pressed
+        self.modify_profile_cbx_status() #disable profile cbx
 
         task_check_var = tk.IntVar() #check button variable
        
@@ -169,6 +172,13 @@ class ToDoList:
         else:
             ch_button.config(state='normal')
         
+    def modify_profile_cbx_status(self):#ttk widget
+        cbx_state = str(self.profile_cbx.cget('state'))
+        if cbx_state == tk.DISABLED :
+            self.profile_cbx.config(state='readonly')
+        else:
+            self.profile_cbx.config(state='disabled')
+        
     def entry_to_label(self, id, profile):
         task_frame = self.profiles_dict[profile]['task_dict'][int(id)]['frame']
         entry_info = self.profiles_dict[profile]['task_dict'][int(id)]['entry'].grid_info()
@@ -188,10 +198,12 @@ class ToDoList:
             self.task_cancel_btn.destroy()
             self.modify_task_button_status() # enable new task button again
             self.modify_check_button_status(counter,profile) #enable check button 
+            self.modify_profile_cbx_status() #enable profile cbx
     
     def cancel_pressed(self,id, profile):
         self.profiles_dict[profile]['task_dict'][id]['frame'].destroy()
         self.modify_task_button_status()
+        self.modify_profile_cbx_status() #enable profile cbx
        
 
     def finished_task(self,profile,var,id):#function to cross out the task when checked 
@@ -205,15 +217,19 @@ class ToDoList:
             text.config(font=('rubik', 12, 'bold'))
 
     def profile_gui(self):
-        self.profile_root = tk.Tk()
-        self.profile_root.title('New profile')
-        self.profile_root.geometry('200x100')
-        self.profile_entry = tk.Entry(self.profile_root)
-        self.profile_entry.pack(side='top', padx=10, pady=10)
-        create_profile_btn = tk.Button(self.profile_root, text='Create profile', command=self.profile_creation_btn)
+        self.profile_sub = tk.Toplevel(self.root)
+        self.profile_sub.title('New profile')
+        self.profile_sub.geometry('400x100')
+        self.profile_sub.resizable(False,False)
+        self.profile_sub.transient(self.root)
+        self.profile_sub.grab_set()
+        self.profile_sub.focus_set()
+        self.profile_entry = tk.Entry(self.profile_sub)
+        self.profile_entry.pack(side='top', padx=10, pady=10, fill='both')
+        create_profile_btn = tk.Button(self.profile_sub, text='Create profile', command=self.profile_creation_btn)
         create_profile_btn.pack(side='left', padx=10, pady=10)
-        cancel_profile_btn = tk.Button(self.profile_root, text='Cancel', command=self.profile_root.destroy)
-        cancel_profile_btn.pack(side='right', padx=10, pady=10)
+        cancel_profile_btn = tk.Button(self.profile_sub, text='Cancel', command=self.profile_sub.destroy)
+        cancel_profile_btn.pack(side='left', padx=10, pady=10)
         """#test btn
         test_btn = tk.Button(self.profile_root, text='test', command=lambda:messagebox.showinfo('dictionary', f'profile dictionary :[ {self.profiles_dict.items()} ]'))
         test_btn.pack(side='bottom', padx=10, pady=10)"""
@@ -225,7 +241,7 @@ class ToDoList:
             actual_values.append(profile_name)
             self.profile_cbx.config(values=actual_values)
             self.profiles_dict[f'{profile_name}'] = {f'{profile_name}_counter':0}
-            self.profile_root.destroy()
+            self.profile_sub.destroy()
         else:
             messagebox.showerror('Error',f'input a proper profile name ! : {profile_name}')
 
@@ -249,7 +265,9 @@ class ToDoList:
     def check_profile(self):
         if self.profile_cbx.get() != 'default':
             self.task_btn.config(state='normal')
-        self.task_btn.config(state='disabled')   
+        self.task_btn.config(state='disabled')  
+
+     
 
     
         
