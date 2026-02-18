@@ -7,7 +7,9 @@ class ToDoList:
     def __init__(self,root):
         self.root = root
         self.root.title('To Do List')
-        self.root.geometry('700x400')
+        self.root.geometry('650x400')
+        self.root.update_idletasks()
+        self.root.minsize(self.root.winfo_width(),self.root.winfo_height())
 
         self.global_font = ('rubik', 11, 'bold')
 
@@ -87,6 +89,8 @@ class ToDoList:
 
         self.active_frame=p_frame
 
+        p_frame.pack(side='right', fill='both') #reposition to implement the subtask panel
+
         self.modify_task_button_status() #disable new task btn until save is pressed
         self.modify_profile_cbx_status() #disable profile cbx
 
@@ -139,6 +143,15 @@ class ToDoList:
             font=('rubik',8,'normal'), 
             command=lambda:self.cancel_pressed(profile_counter,profile) ) 
         self.task_cancel_btn.grid(row=0, column=3, padx=5, pady=5)
+        
+        self.sub_task_add_btn = tk.Button( ##subtask test
+            task_individual_frame, 
+            text='+', 
+            font=('rubik',8,'bold'),
+            state='disabled', 
+            command=self.sub_task_panel) 
+        self.sub_task_add_btn.grid(row=0, column=4, padx=5, pady=5)
+       
 
         self.modify_check_button_status(profile_counter, profile) #disable check button until the task is saved
 
@@ -199,13 +212,13 @@ class ToDoList:
             self.modify_task_button_status() # enable new task button again
             self.modify_check_button_status(counter,profile) #enable check button 
             self.modify_profile_cbx_status() #enable profile cbx
+            self.sub_task_add_btn.config(state='normal')#make a function
     
     def cancel_pressed(self,id, profile):
         self.profiles_dict[profile]['task_dict'][id]['frame'].destroy()
         self.modify_task_button_status()
         self.modify_profile_cbx_status() #enable profile cbx
        
-
     def finished_task(self,profile,var,id):#function to cross out the task when checked 
         active_profile = profile
         check = var
@@ -215,6 +228,8 @@ class ToDoList:
             text.config(font=('rubik', 8, 'italic overstrike'))
         else:
             text.config(font=('rubik', 12, 'bold'))
+
+    #start profiles
 
     def profile_gui(self):
         self.profile_sub = tk.Toplevel(self.root)
@@ -251,14 +266,14 @@ class ToDoList:
         
         if 'frame' not in self.profiles_dict[key]:
             self.profiles_dict[key].update({'frame':tk.Frame(self.body_frame, bg='lightblue')})
-            self.profiles_dict[key]['frame'].pack(side='bottom', fill='both',expand=True)
-        else: 
-            self.profiles_dict[key]['frame'].pack(side='bottom', fill='both',expand=True)
+            self.profiles_dict[key]['frame'].pack(side='right', fill='both')
+        else: #previously side='bottom' fill='both' expand='True'
+            self.profiles_dict[key]['frame'].pack(side='right', fill='both')
         
     def profile_cb(self, *_):
         profile = self.profile_cbx.get()
         self.profile_frame(profile)
-        print(self.profile_cbx.get())
+        print(self.profile_cbx.get()) #TESTING
         self.task_btn.config(state='normal')
         self.active_frame = self.profiles_dict[profile]['frame']
 
@@ -267,7 +282,33 @@ class ToDoList:
             self.task_btn.config(state='normal')
         self.task_btn.config(state='disabled')  
 
-     
+    #start sub tasks
+
+    def sub_task_frame(self):
+        self.sub_frame = tk.Frame(self.body_frame, bg="#afe9f3")
+        
+
+    def show_hide_sub(self):
+        if self.sub_frame.winfo_ismapped():
+           self.sub_frame.pack_forget()
+        else:
+           self.sub_frame.config(height=100, width=300)
+           self.sub_frame.pack(side='left', fill='both' )
+
+
+    def sub_task_panel(self):
+        if hasattr(self,'sub_frame') and self.sub_frame.winfo_exists():
+            self.show_hide_sub()
+        else:
+            self.sub_task_frame()
+            self.show_hide_sub()
+        
+
+           
+
+
+
+
 
     
         
