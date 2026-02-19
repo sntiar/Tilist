@@ -12,9 +12,10 @@ This application is designed to help users manage productivity through a goal-or
 *   **Sub-Tasks**: Break down complex tasks into smaller, manageable steps.
 *   **Data Persistence**: Implementation of a database to store and recover profiles, tasks, and sub-tasks across sessions.
 
-### 🛠 Current Status: Developing Sub-Tasks
-Recently fixed a major bug 
+### 🛠 Current Status: Working on architectural evolution
+
 - [x] Refactored the core data structure from a flat dictionary to a nested profile-based dictionary.
+- [ ] Refactor the project to **Implement Model-View Separation**.
 - [ ] Implement Sub-Tasks.
 - [ ] Database integration.
 
