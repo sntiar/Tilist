@@ -12,15 +12,10 @@ This application is designed to help users manage productivity through a goal-or
 *   **Sub-Tasks**: Break down complex tasks into smaller, manageable steps.
 *   **Data Persistence**: Implementation of a database to store and recover profiles, tasks, and sub-tasks across sessions.
 
-### 🛠 Current Status: Developing Sub-Tasks
-Recently fixed a major bug 
-- [x] Refactored the core data structure from a flat dictionary to a nested profile-based dictionary.
-- [ ] Implement Sub-Tasks.
-- [ ] Database integration.
+### 🛠 Current Status: Refactor branch.
 
+***App is functional, but further logic extraction from the main class is pending.***
 
-
-Side Note : As i started working on the 'profiles', i had to refactor some functions, so there may be variables or lines of code that arent being used or outdated comments that are pending for a clean up.
 
 
 Note on Development: This project was developed with the assistance of AI as a learning mentor. I utilized AI to help debug complex logic errors (such as dictionary state management and late-binding issues) and to refine the project's documentation. Every architectural decision and fix was manually implemented and tested to ensure a proper understanding of the underlying concepts.
