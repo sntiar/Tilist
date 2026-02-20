@@ -3,6 +3,7 @@ from tkinter import ttk
 from tkinter import messagebox
 from task import Task
 from profile import Profile
+import utils
 
 
 class ToDoList:
@@ -111,6 +112,9 @@ class ToDoList:
 
         new_task.task_entry = tk.Entry(new_task.task_individual_frame, font=self.global_font)
         new_task.task_entry.grid(row=0, column=1, padx=10, pady=10, sticky='ew')
+        
+        vc = new_task.task_entry.register(lambda p:utils.entry_lenght_limit(100, p)),'%P' #replaced forced_task_entry function
+        new_task.task_entry.config(validate='key', validatecommand=vc)
  
         new_task.task_cancel_btn = tk.Button(
             new_task.task_individual_frame, 
@@ -134,26 +138,9 @@ class ToDoList:
             command=lambda:self.save_pressed(new_task) 
             )
         new_task.task_save_btn.grid(row=0, column=2, padx=5, pady=5)
-       
 
         self.modify_check_button_status(new_task) #disable check button until the task is saved
-        
-    def entry_lenght_limit(self,text):
-        return True if len(text)<=100 else False
-   
-    def forced_task_lenght(self,task_object: Task):
-        
-        task_text = task_object.task_entry
-        if self.entry_lenght_limit(task_text.get()) is False: #if its under the limit ...
-            task_text.delete(100,tk.END)
 
-    def check_task_empty(self,task_object: Task):
-        task_text = task_object.task_entry
-        if task_text.get() != '': 
-            return False
-        messagebox.showerror('ERROR', ' Task is empty! ')
-        return True      
-            
     def modify_task_button_status(self):
         if self.task_btn['state'] == tk.NORMAL:
             self.task_btn.config(state='disabled')
@@ -178,10 +165,10 @@ class ToDoList:
         task_object.converted_task_lbl.grid(column=entry_info['column'], row=entry_info['row'], sticky='W')
         
     def save_pressed(self,task_object: Task):
-        if self.check_task_empty(task_object) is True:
-            pass
+        task_text = task_object.task_entry.get()
+        if utils.task_empty(task_text):
+            messagebox.showerror('Error', 'Input a valid task content.')
         else:
-            self.forced_task_lenght(task_object)
             self.entry_to_label(task_object)
             task_object.task_save_btn.destroy()
             task_object.task_cancel_btn.destroy()
@@ -201,8 +188,10 @@ class ToDoList:
         
         if check.get():
             text.config(font=('rubik', 8, 'italic overstrike'))
+            task_object.is_completed = True
         else:
             text.config(font=('rubik', 12, 'bold'))
+            task_object.is_completed = False
 
     #start profiles
 
@@ -257,6 +246,7 @@ class ToDoList:
         self.profile_frame(profile_object)
         self.task_btn.config(state='normal')
         self.active_frame = profile_object.p_frame
+        self.subpanel_mapping()
 
     def default_profile(self):
          if 'default' not in self.profiles_dict:
@@ -266,7 +256,11 @@ class ToDoList:
          if hasattr(profile,'p_frame') == False:
             profile.p_frame = tk.Frame(self.body_frame, bg='lightblue')
             profile.p_frame.pack(side='right', fill='both', expand=True)
-    
+
+    def subpanel_mapping(self):
+        if self.sub_frame.winfo_ismapped():
+            self.sub_frame.pack_forget()
+       
     #start sub tasks
 
     def sub_task_frame(self):

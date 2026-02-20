@@ -6,3 +6,9 @@ class Task:
     def __repr__(self):
         return f'Task : {self.content}. Status:{self.is_completed}'
     
+
+if __name__=="__main__":
+        test = Task("This is a test task")
+
+        print(test)
+        
