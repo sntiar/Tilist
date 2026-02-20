@@ -76,53 +76,53 @@ class ToDoList:
         task_lbl.grid(column=0, row=0, padx=5, pady=5, sticky='ew') #ew = east to west (expand with the window resizing)
 
     def task_creation(self, profile: Profile):
-        
         new_task = Task('')
-        
         _,id = profile.add_task(new_task)
-
         self.active_frame = profile.p_frame
+        self.task_gui(new_task, id, profile)
 
-        self.active_frame.pack(side='right', fill='both') #reposition to implement the subtask panel
+    def task_gui(self, new_task: Task, id: int, profile: Profile):
+
+        p_frame = profile.p_frame
+        p_frame.pack(side='right', fill='both') #reposition to implement the subtask panel
 
         self.modify_task_button_status() #disable new task btn until save is pressed
         self.modify_profile_cbx_status() #disable profile cbx
 
-        task_check_var = tk.IntVar() #check button variable
+        new_task.task_check_var = tk.IntVar() #check button variable
        
-        self.active_frame.grid_columnconfigure(0, weight=1)
+        p_frame.grid_columnconfigure(0, weight=1)
 
-        new_task.task_individual_frame = tk.Frame(self.active_frame, background='skyblue')
+        new_task.task_individual_frame = tk.Frame(p_frame, background='skyblue')
         new_task.task_individual_frame.grid(column=0, row=id, sticky='ew')
         new_task.task_individual_frame.grid_columnconfigure(1, weight=1)
-        
-        
+
         new_task.task_cbtn = tk.Checkbutton(
             new_task.task_individual_frame, 
             text=f'Task {id} : ', 
             font=self.global_font,
-            variable=task_check_var,
+            variable=new_task.task_check_var,
             bg='skyblue',
             relief='solid',
             border=2,
-            command=lambda v=task_check_var,t=new_task:self.finished_task(v,t) 
+            command=lambda t=new_task:self.finished_task(t) 
             )
         
         new_task.task_cbtn.grid(row=0, column=0, pady=10, padx=10, sticky='ew')
-
+        
         new_task.task_entry = tk.Entry(new_task.task_individual_frame, font=self.global_font)
         new_task.task_entry.grid(row=0, column=1, padx=10, pady=10, sticky='ew')
         
         vc = new_task.task_entry.register(lambda p:utils.entry_lenght_limit(100, p)),'%P' #replaced forced_task_entry function
         new_task.task_entry.config(validate='key', validatecommand=vc)
- 
+
         new_task.task_cancel_btn = tk.Button(
             new_task.task_individual_frame, 
             text='CANCEL', 
             font=('rubik',8,'normal'), 
             command=lambda:self.cancel_pressed(new_task) ) 
         new_task.task_cancel_btn.grid(row=0, column=3, padx=5, pady=5)
-        
+
         new_task.sub_task_add_btn = tk.Button( ##subtask test
             new_task.task_individual_frame, 
             text='+', 
@@ -140,6 +140,7 @@ class ToDoList:
         new_task.task_save_btn.grid(row=0, column=2, padx=5, pady=5)
 
         self.modify_check_button_status(new_task) #disable check button until the task is saved
+
 
     def modify_task_button_status(self):
         if self.task_btn['state'] == tk.NORMAL:
@@ -179,11 +180,13 @@ class ToDoList:
     
     def cancel_pressed(self,task_object: Task):
         task_object.task_individual_frame.destroy()
+        task_object.profile.task_list.remove(task_object)
+        print (task_object.profile.task_list) #test
         self.modify_task_button_status()
         self.modify_profile_cbx_status() #enable profile cbx
        
-    def finished_task(self,var,task_object: Task):#function to cross out the task when checked 
-        check = var
+    def finished_task(self,task_object: Task):#function to cross out the task when checked 
+        check = task_object.task_check_var
         text = task_object.converted_task_lbl
         
         if check.get():
