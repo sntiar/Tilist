@@ -4,6 +4,10 @@ from tkinter import messagebox
 from task import Task
 from profile import Profile
 import utils
+from gui_manager import GuiManager 
+
+#testing
+import testing
 
 
 class ToDoList:
@@ -16,13 +20,15 @@ class ToDoList:
         self.global_font = ('rubik', 11, 'bold')
         self.active_frame = None
 
+        self.gum = GuiManager()
+
         self.top_ui_setup()
         self.body_ui_setup()
 
         self.profiles_dict = {} 
 
         self.default_profile()
-    
+       
     def top_ui_setup(self):
         top_font = self.global_font
 
@@ -31,6 +37,7 @@ class ToDoList:
 
         self.profile_btn= tk.Button(self.top_form, text='NEW POFILE', font=top_font, command=self.profile_gui)
         self.profile_btn.grid(column=1, row=2, padx=10, pady=20)
+        self.gum.register(self.profile_btn,{'NORMAL'},False)
 
         self.task_btn= tk.Button(
             self.top_form, 
@@ -38,16 +45,20 @@ class ToDoList:
             font=top_font, 
             command=lambda: self.task_creation(self.profiles_dict[self.profile_cbx.get()]))
         self.task_btn.grid(column=2, row=2, padx=10, pady=20)
+        self.gum.register(self.task_btn,{'NORMAL'},False)
 
         self.sub_task_btn= tk.Button(self.top_form, text='NEW SUBTASK', font=top_font)
         self.sub_task_btn.grid(column=3, row=2, padx=10, pady=20)
+        self.gum.register(self.sub_task_btn,{'NORMAL'},False)
         
 
         self.save_btn= tk.Button(self.top_form, text='SAVE', font=top_font)
         self.save_btn.grid(column=4, row=2, padx=10, pady=20)
+        self.gum.register(self.save_btn,{'NORMAL'},False)
 
         self.clear_btn= tk.Button(self.top_form, text='CLEAR', font=top_font)
         self.clear_btn.grid(column=5, row=2, padx=10, pady=20)
+        self.gum.register(self.clear_btn,{'NORMAL'},False)
 
         self.profile_cbx = ttk.Combobox(self.top_form, font=top_font)
         self.profile_cbx.config(width=20, justify='center', state='readonly')
@@ -55,6 +66,7 @@ class ToDoList:
         self.profile_cbx.current(0)
         self.profile_cbx.bind("<<ComboboxSelected>>",self.profile_cb)
         self.profile_cbx.grid(column=3, row=3, padx=10, pady=20, columnspan= 2)
+        self.gum.register(self.profile_cbx,{'NORMAL'},True)
 
         combo_lbl = tk.Label(self.top_form, text='Choose a profile : ', font=top_font, bg='steelblue')
         combo_lbl.grid(column=2, row=3, padx=10, pady=20)
@@ -82,12 +94,10 @@ class ToDoList:
         self.task_gui(new_task, id, profile)
 
     def task_gui(self, new_task: Task, id: int, profile: Profile):
+        self.gum.set_active_mode('NEW_TASK')
 
         p_frame = profile.p_frame
-        p_frame.pack(side='right', fill='both') #reposition to implement the subtask panel
-
-        self.modify_task_button_status() #disable new task btn until save is pressed
-        self.modify_profile_cbx_status() #disable profile cbx
+        p_frame.pack(side='right', fill='both', expand=True) #reposition to implement the subtask panel
 
         new_task.task_check_var = tk.IntVar() #check button variable
        
@@ -107,11 +117,12 @@ class ToDoList:
             border=2,
             command=lambda t=new_task:self.finished_task(t) 
             )
-        
         new_task.task_cbtn.grid(row=0, column=0, pady=10, padx=10, sticky='ew')
+        self.gum.register(new_task.task_cbtn,{'NORMAL'},False)
         
         new_task.task_entry = tk.Entry(new_task.task_individual_frame, font=self.global_font)
         new_task.task_entry.grid(row=0, column=1, padx=10, pady=10, sticky='ew')
+        self.gum.register(new_task.task_entry,{'NEW_TASK'},False)
         
         vc = new_task.task_entry.register(lambda p:utils.entry_lenght_limit(100, p)),'%P' #replaced forced_task_entry function
         new_task.task_entry.config(validate='key', validatecommand=vc)
@@ -122,6 +133,7 @@ class ToDoList:
             font=('rubik',8,'normal'), 
             command=lambda:self.cancel_pressed(new_task) ) 
         new_task.task_cancel_btn.grid(row=0, column=3, padx=5, pady=5)
+        self.gum.register(new_task.task_cancel_btn,{'NEW_TASK'},False)
 
         new_task.sub_task_add_btn = tk.Button( ##subtask test
             new_task.task_individual_frame, 
@@ -130,6 +142,7 @@ class ToDoList:
             state='disabled', 
             command=self.sub_task_panel) 
         new_task.sub_task_add_btn.grid(row=0, column=4, padx=5, pady=5)
+        self.gum.register(new_task.sub_task_add_btn,{'NORMAL'},False)
 
         new_task.task_save_btn = tk.Button(
             new_task.task_individual_frame, 
@@ -138,28 +151,15 @@ class ToDoList:
             command=lambda:self.save_pressed(new_task) 
             )
         new_task.task_save_btn.grid(row=0, column=2, padx=5, pady=5)
+        self.gum.register(new_task.task_save_btn,{'NEW_TASK'},False)
 
-        self.modify_check_button_status(new_task) #disable check button until the task is saved
-
-    def modify_task_button_status(self):
-        if self.task_btn['state'] == tk.NORMAL:
-            self.task_btn.config(state='disabled')
-        else:
-            self.task_btn.config(state='normal')
-    
-    def modify_check_button_status(self,task_object: Task):
-        ch_button = task_object.task_cbtn
-        if ch_button['state'] == tk.NORMAL:
-            ch_button.config(state='disabled')
-        else:
-            ch_button.config(state='normal')
-        
     def entry_to_label(self, task_object: Task):
         
         task_frame = task_object.task_individual_frame
         entry_info = task_object.task_entry.grid_info()
         text = task_object.task_entry.get()
         task_object.content = text 
+        self.gum.remove_destroyed(task_object.task_entry)
         task_object.task_entry.destroy()
         task_object.converted_task_lbl = tk.Label(task_frame,text=text,font=self.global_font, bg='skyblue')
         task_object.converted_task_lbl.grid(column=entry_info['column'], row=entry_info['row'], sticky='W')
@@ -169,20 +169,24 @@ class ToDoList:
         if utils.task_empty(task_text):
             messagebox.showerror('Error', 'Input a valid task content.')
         else:
+            self.gum.set_active_mode('NORMAL')
             self.entry_to_label(task_object)
+            self.gum.remove_destroyed(task_object.task_save_btn)
             task_object.task_save_btn.destroy()
+            self.gum.remove_destroyed(task_object.task_cancel_btn)
             task_object.task_cancel_btn.destroy()
-            self.modify_task_button_status() # enable new task button again
-            self.modify_check_button_status(task_object) #enable check button 
-            self.modify_profile_cbx_status() #enable profile cbx
-            task_object.sub_task_add_btn.config(state='normal')#make a function
     
     def cancel_pressed(self,task_object: Task):
+        self.gum.set_active_mode('NORMAL')
+        self.task_canceled_destruction(task_object)
         task_object.task_individual_frame.destroy()
         task_object.profile.task_list.remove(task_object)
-        self.modify_task_button_status()
-        self.modify_profile_cbx_status() #enable profile cbx
-       
+
+    def task_canceled_destruction(self,task_object: Task):
+        child_widgets = task_object.task_individual_frame.winfo_children()
+        for i in child_widgets:
+            self.gum.remove_destroyed(i)
+
     def finished_task(self,task_object: Task):#function to cross out the task when checked 
         check = task_object.task_check_var
         text = task_object.converted_task_lbl
@@ -195,13 +199,6 @@ class ToDoList:
             task_object.is_completed = False
 
     #start profiles
-
-    def modify_profile_cbx_status(self):#ttk widget
-        cbx_state = str(self.profile_cbx.cget('state'))
-        if cbx_state == tk.DISABLED :
-            self.profile_cbx.config(state='readonly')
-        else:
-            self.profile_cbx.config(state='disabled')
 
     def profile_gui(self):
         self.profile_sub = tk.Toplevel(self.root)
@@ -250,6 +247,7 @@ class ToDoList:
         self.subpanel_mapping()
 
     def default_profile(self):
+         
          if 'default' not in self.profiles_dict:
              self.profiles_dict['default'] = Profile('default')
 
@@ -257,8 +255,10 @@ class ToDoList:
          if hasattr(profile,'p_frame') == False:
             profile.p_frame = tk.Frame(self.body_frame, bg='lightblue')
             profile.p_frame.pack(side='right', fill='both', expand=True)
+            self.active_frame=profile.p_frame
 
     def subpanel_mapping(self):
+        if not hasattr(self,'sub_frame'):return
         if self.sub_frame.winfo_ismapped():
             self.sub_frame.pack_forget()
        

@@ -11,15 +11,23 @@ class GuiManager:
 
     def __init__(self):
         self.registry = {}
-        self.modes = {'NORMAL','NEW_TASK'}
-        self.active_mode = ''
+        self.modes = {'NORMAL','NEW_TASK','BLOCKED'}
+        self.active_mode = 'NORMAL'
        
     def is_registered(self,widget:tk)->bool:
         rules = self._fail_safe(widget)
         return bool(rules)
     
+    def remove_destroyed(self,widget):
+        self.registry.pop(widget)
+
+    
     def register(self,widget,modes:set,is_readonly:bool):
         self.registry[widget] = WidgetRules(modes,is_readonly)
+        self._toggle(widget)
+
+    def testing(self):
+        print(self.registry.items())
 
     def _toggle(self,widget):
         rules = self._fail_safe(widget) #rules is short for the dataclass object's name
@@ -41,7 +49,8 @@ class GuiManager:
     def _fail_safe (self, widget):
         return self.registry.get(widget,None) #look for the key(widget) if is not there return a default value None
 
-    def set_current_state(self, new_mode):
+    def set_active_mode(self, new_mode):
+        if new_mode not in self.modes: return
         self.active_mode = new_mode
         for i in self.registry:
             self._toggle(i)
