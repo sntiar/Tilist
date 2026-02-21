@@ -141,7 +141,6 @@ class ToDoList:
 
         self.modify_check_button_status(new_task) #disable check button until the task is saved
 
-
     def modify_task_button_status(self):
         if self.task_btn['state'] == tk.NORMAL:
             self.task_btn.config(state='disabled')
@@ -160,7 +159,7 @@ class ToDoList:
         task_frame = task_object.task_individual_frame
         entry_info = task_object.task_entry.grid_info()
         text = task_object.task_entry.get()
-        task_object.content = text
+        task_object.content = text 
         task_object.task_entry.destroy()
         task_object.converted_task_lbl = tk.Label(task_frame,text=text,font=self.global_font, bg='skyblue')
         task_object.converted_task_lbl.grid(column=entry_info['column'], row=entry_info['row'], sticky='W')
@@ -181,7 +180,6 @@ class ToDoList:
     def cancel_pressed(self,task_object: Task):
         task_object.task_individual_frame.destroy()
         task_object.profile.task_list.remove(task_object)
-        print (task_object.profile.task_list) #test
         self.modify_task_button_status()
         self.modify_profile_cbx_status() #enable profile cbx
        
