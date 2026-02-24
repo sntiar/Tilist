@@ -6,10 +6,6 @@ from profile import Profile
 import utils
 from gui_manager import GuiManager 
 
-#testing
-import testing
-
-
 class ToDoList:
     def __init__(self,root):
         self.root = root
@@ -25,7 +21,7 @@ class ToDoList:
         self.top_ui_setup()
         self.body_ui_setup()
 
-        self.profiles_dict = {} 
+        self.profiles_dict = {}
 
         self.default_profile()
        
@@ -47,17 +43,12 @@ class ToDoList:
         self.task_btn.grid(column=2, row=2, padx=10, pady=20)
         self.gum.register(self.task_btn,{'NORMAL'},False)
 
-        self.sub_task_btn= tk.Button(self.top_form, text='NEW SUBTASK', font=top_font)
-        self.sub_task_btn.grid(column=3, row=2, padx=10, pady=20)
-        self.gum.register(self.sub_task_btn,{'NORMAL'},False)
-        
-
         self.save_btn= tk.Button(self.top_form, text='SAVE', font=top_font)
-        self.save_btn.grid(column=4, row=2, padx=10, pady=20)
+        self.save_btn.grid(column=3, row=2, padx=10, pady=20)
         self.gum.register(self.save_btn,{'NORMAL'},False)
 
         self.clear_btn= tk.Button(self.top_form, text='CLEAR', font=top_font)
-        self.clear_btn.grid(column=5, row=2, padx=10, pady=20)
+        self.clear_btn.grid(column=4, row=2, padx=10, pady=20)
         self.gum.register(self.clear_btn,{'NORMAL'},False)
 
         self.profile_cbx = ttk.Combobox(self.top_form, font=top_font)
@@ -89,9 +80,11 @@ class ToDoList:
 
     def task_creation(self, profile: Profile):
         new_task = Task('')
+        new_task.subtask_id = 0
         _,id = profile.add_task(new_task)
         self.active_frame = profile.p_frame
         self.task_gui(new_task, id, profile)
+
 
     def task_gui(self, new_task: Task, id: int, profile: Profile):
         self.gum.set_active_mode('NEW_TASK')
@@ -131,16 +124,29 @@ class ToDoList:
             new_task.task_individual_frame, 
             text='CANCEL', 
             font=('rubik',8,'normal'), 
-            command=lambda:self.cancel_pressed(new_task) ) 
+            command=lambda:self.cancel_pressed(new_task,0) ) # 0 is the flag to recognize the function is called from new task
         new_task.task_cancel_btn.grid(row=0, column=3, padx=5, pady=5)
         self.gum.register(new_task.task_cancel_btn,{'NEW_TASK'},False)
 
-        new_task.sub_task_add_btn = tk.Button( ##subtask test
+        new_task.subtask_frame = self.sub_task_frame()
+        #new_task.subtask.subtask_frame.pack(side='right', fill='both', expand=True) #reposition to implement the subtask panel
+        new_task.subtask_frame.grid_columnconfigure(0, weight=1)
+
+        new_task.sub_task_panel_btn = tk.Button( ##subtask test
             new_task.task_individual_frame, 
             text='+', 
             font=('rubik',8,'bold'),
             state='disabled', 
-            command=self.sub_task_panel) 
+            command=lambda p=new_task.subtask_frame:self.sub_task_panel(p)) 
+        new_task.sub_task_panel_btn.grid(row=0, column=5, padx=5, pady=5)
+        self.gum.register(new_task.sub_task_panel_btn,{'NORMAL','NEW_TASK'},False)
+
+        new_task.sub_task_add_btn = tk.Button( ##subtask test
+            new_task.task_individual_frame, 
+            text='Add Subtask', 
+            font=('rubik',8,'bold'),
+            state='disabled', 
+            command=lambda t=new_task :self.subtask_creation(t)) 
         new_task.sub_task_add_btn.grid(row=0, column=4, padx=5, pady=5)
         self.gum.register(new_task.sub_task_add_btn,{'NORMAL'},False)
 
@@ -176,11 +182,18 @@ class ToDoList:
             self.gum.remove_destroyed(task_object.task_cancel_btn)
             task_object.task_cancel_btn.destroy()
     
-    def cancel_pressed(self,task_object: Task):
-        self.gum.set_active_mode('NORMAL')
-        self.task_canceled_destruction(task_object)
-        task_object.task_individual_frame.destroy()
-        task_object.profile.task_list.remove(task_object)
+    def cancel_pressed(self,task_object: Task,flag): #flag = 0 task, flag = 1 subtask
+        if flag == 0:
+            self.gum.set_active_mode('NORMAL')
+            self.task_canceled_destruction(task_object)
+            task_object.task_individual_frame.destroy()
+            task_object.profile.task_list.remove(task_object)
+        elif flag == 1:
+            self.gum.set_active_mode('NORMAL')
+            self.task_canceled_destruction(task_object.subtask)
+            task_object.subtask.task_individual_frame.destroy()
+            #task_object.subtask_list.remove(task_object.subtask)
+            task_object.subtask_id -= 1
 
     def task_canceled_destruction(self,task_object: Task):
         child_widgets = task_object.task_individual_frame.winfo_children()
@@ -257,29 +270,86 @@ class ToDoList:
             profile.p_frame.pack(side='right', fill='both', expand=True)
             self.active_frame=profile.p_frame
 
-    def subpanel_mapping(self):
-        if not hasattr(self,'sub_frame'):return
-        if self.sub_frame.winfo_ismapped():
-            self.sub_frame.pack_forget()
+    def subpanel_mapping(self, sub_frame):
+       # if not hasattr(self,'sub_frame'):return
+        if sub_frame.winfo_ismapped():
+            sub_frame.pack_forget()
        
-    #start sub tasks
+    #start sub tasks # ts
 
     def sub_task_frame(self):
-        self.sub_frame = tk.Frame(self.body_frame, bg="#afe9f3")       
+        sub_frame = tk.Frame(self.body_frame, bg="#afe9f3")   
+        return sub_frame  
 
-    def show_hide_sub(self):
-        if self.sub_frame.winfo_ismapped():
-           self.sub_frame.pack_forget()
+    def show_hide_sub(self,sub_frame):
+        if sub_frame.winfo_ismapped():
+           sub_frame.pack_forget()
         else:
-           self.sub_frame.config(height=100, width=300)
-           self.sub_frame.pack(side='left', fill='both' )
+           sub_frame.config(height=100, width=300)
+           sub_frame.pack(side='left', fill='both' )
 
-    def sub_task_panel(self):
-        if hasattr(self,'sub_frame') and self.sub_frame.winfo_exists():
-            self.show_hide_sub()
+    def sub_task_panel(self, sub_frame):
+        if sub_frame.winfo_exists():
+            self.show_hide_sub(sub_frame)
         else:
-            self.sub_task_frame()
-            self.show_hide_sub()
+            self.show_hide_sub(self.sub_task_frame())
+
+    def add_subtask(self, task,subtask):
+        task.add_subtask(subtask)
+
+    def subtask_creation(self, task_obj):
+        task = task_obj
+        frame = task_obj.subtask_frame
+        self.subtask_gui(task,task.subtask_id,frame)
+        task.subtask_id += 1
+
+    def subtask_gui(self, task, id, sub_frame):
+        self.gum.set_active_mode('NEW_TASK')
+
+        task.subtask = Task("")
+
+        task.subtask.task_check_var = tk.IntVar() #check button variable
+       
+        task.subtask.task_individual_frame = tk.Frame(sub_frame, background='skyblue')
+        task.subtask.task_individual_frame.grid(column=0, row=id, sticky='ew')
+        task.subtask.task_individual_frame.grid_columnconfigure(1, weight=1)
+
+        task.subtask.task_cbtn = tk.Checkbutton(
+            task.subtask.task_individual_frame, 
+            text=f'Task {id} : ', 
+            font=self.global_font,
+            variable=task.subtask.task_check_var,
+            bg='skyblue',
+            relief='solid',
+            border=2,
+            command=lambda t=task.subtask:self.finished_task(t) 
+            )
+        task.subtask.task_cbtn.grid(row=0, column=0, pady=10, padx=10, sticky='ew')
+        self.gum.register(task.subtask.task_cbtn,{'NORMAL'},False)
+        
+        task.subtask.task_entry = tk.Entry(task.subtask.task_individual_frame, font=self.global_font)
+        task.subtask.task_entry.grid(row=0, column=1, padx=10, pady=10, sticky='ew')
+        self.gum.register(task.subtask.task_entry,{'NEW_TASK'},False)
+        
+        vc = task.subtask.task_entry.register(lambda p:utils.entry_lenght_limit(100, p)),'%P' #replaced forced_task_entry function
+        task.subtask.task_entry.config(validate='key', validatecommand=vc)
+
+        task.subtask.task_cancel_btn = tk.Button(
+            task.subtask.task_individual_frame, 
+            text='CANCEL', 
+            font=('rubik',8,'normal'), 
+            command=lambda:self.cancel_pressed(task,1) ) # 1 is the flag to recognize the function is called from new task
+        task.subtask.task_cancel_btn.grid(row=0, column=3, padx=5, pady=5)
+        self.gum.register(task.subtask.task_cancel_btn,{'NEW_TASK'},False)
+
+        task.subtask.task_save_btn = tk.Button(
+            task.subtask.task_individual_frame, 
+            text='SAVE', 
+            font=('rubik',8,'normal'), 
+            command=lambda:self.save_pressed(task.subtask) 
+            )
+        task.subtask.task_save_btn.grid(row=0, column=2, padx=5, pady=5)
+        self.gum.register(task.subtask.task_save_btn,{'NEW_TASK'},False)
         
 
         

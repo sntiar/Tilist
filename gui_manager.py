@@ -26,9 +26,6 @@ class GuiManager:
         self.registry[widget] = WidgetRules(modes,is_readonly)
         self._toggle(widget)
 
-    def testing(self):
-        print(self.registry.items())
-
     def _toggle(self,widget):
         rules = self._fail_safe(widget) #rules is short for the dataclass object's name
         if rules is None: return 
