@@ -70,11 +70,11 @@ class ToDoList:
         self.body_frame = tk.Frame(border_frame, background='lightblue', height=50, relief='solid', border=5)
         self.body_frame.pack(padx=5, pady=5, side='bottom', fill='both',expand=True) 
 
-        tittle_frame = tk.Frame(self.body_frame, background='lightblue') #aux frame to keep the tittle label in place
-        tittle_frame.pack(side='top', fill='x')
-        tittle_frame.grid_columnconfigure(0, weight=1)   # allowing the label resizing by changing the father container
+        self.tittle_frame = tk.Frame(self.body_frame, background='lightblue') #aux frame to keep the tittle label in place
+        self.tittle_frame.pack(side='top', fill='x')
+        self.tittle_frame.grid_columnconfigure(0, weight=1)   # allowing the label resizing by changing the father container
         
-        task_lbl = tk.Label(tittle_frame, text='TASKS : ', font=('rubik', 20, 'bold'), bg='skyblue')
+        task_lbl = tk.Label(self.tittle_frame, text='TASKS : ', font=('rubik', 20, 'bold'), bg='skyblue')
         task_lbl.config(relief='solid', border=2)# border
         task_lbl.grid(column=0, row=0, padx=5, pady=5, sticky='ew') #ew = east to west (expand with the window resizing)
 
@@ -139,7 +139,7 @@ class ToDoList:
             state='disabled', 
             command=lambda p=new_task.subtask_frame:self.sub_task_panel(p)) 
         new_task.sub_task_panel_btn.grid(row=0, column=5, padx=5, pady=5)
-        self.gum.register(new_task.sub_task_panel_btn,{'NORMAL','NEW_TASK'},False)
+        self.gum.register(new_task.sub_task_panel_btn,{'NORMAL'},False) #pior states 'NORMAL','NEW_TASK'
 
         new_task.sub_task_add_btn = tk.Button( ##subtask test
             new_task.task_individual_frame, 
@@ -253,11 +253,18 @@ class ToDoList:
             profile_object.p_frame.pack(side='right', fill='both', expand=True)
         
     def profile_cb(self, *_): 
+        self.body_frame_child()
         profile_object = self.profiles_dict[self.profile_cbx.get()]
         self.profile_frame(profile_object)
         self.task_btn.config(state='normal')
         self.active_frame = profile_object.p_frame
-        self.subpanel_mapping()
+        #self.subpanel_mapping()
+
+    def body_frame_child(self):
+        widgets = self.body_frame.winfo_children()
+        for i in widgets:
+            if i == self.tittle_frame: continue
+            i.pack_forget()
 
     def default_profile(self):
          
@@ -271,7 +278,7 @@ class ToDoList:
             self.active_frame=profile.p_frame
 
     def subpanel_mapping(self, sub_frame):
-       # if not hasattr(self,'sub_frame'):return
+        if not hasattr(self,'sub_frame'):return
         if sub_frame.winfo_ismapped():
             sub_frame.pack_forget()
        
@@ -281,18 +288,19 @@ class ToDoList:
         sub_frame = tk.Frame(self.body_frame, bg="#afe9f3")   
         return sub_frame  
 
-    def show_hide_sub(self,sub_frame):
-        if sub_frame.winfo_ismapped():
-           sub_frame.pack_forget()
+    def show_hide_sub(self,sub_frame,x): # x its just a flag do differentiate from where i call this function
+        if sub_frame.winfo_ismapped() and x == 1:
+            sub_frame.pack_forget()
         else:
-           sub_frame.config(height=100, width=300)
-           sub_frame.pack(side='left', fill='both' )
+            if sub_frame.winfo_ismapped(): return
+            sub_frame.config(height=100, width=300)
+            sub_frame.pack(side='left', fill='both' )
 
     def sub_task_panel(self, sub_frame):
         if sub_frame.winfo_exists():
-            self.show_hide_sub(sub_frame)
+            self.show_hide_sub(sub_frame,1)
         else:
-            self.show_hide_sub(self.sub_task_frame())
+            self.show_hide_sub(self.sub_task_frame(),1)
 
     def add_subtask(self, task,subtask):
         task.add_subtask(subtask)
@@ -305,6 +313,7 @@ class ToDoList:
 
     def subtask_gui(self, task, id, sub_frame):
         self.gum.set_active_mode('NEW_TASK')
+        self.show_hide_sub(sub_frame,0) # 0 is a flag to avoid hiding it and always show it when a subtask is created
 
         task.subtask = Task("")
 
